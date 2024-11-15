@@ -1,0 +1,305 @@
+Q2) Symbol Table
+
+#include <stdio.h>
+#include <string.h>
+
+struct symtab {
+    int lineno;
+    char var[25], dt[25], val[10];
+} sa[20];
+
+void main() {
+    int i = 0, max = 0, line = 0;
+    char s[25], typ[25], gar[] = "garbage";
+
+    // Static input as a list of strings to simulate file content
+    const char *input[] = {
+    "int", "a", ",", "b", "=", "5", ";",
+    "float", "c", ";",
+    "char", "d", "=", "a", ";",
+    NULL // End of input
+};
+
+
+    int idx = 0;
+    printf("\n\nSYMBOL TABLE MANAGEMENT\n\n");
+    printf("Variable\tDatatype\tLine.no.\t\tValue\n");
+
+    while (input[idx] != NULL) {
+        strcpy(s, input[idx++]);
+
+        if ((strcmp(s, "int") == 0) || (strcmp(s, "float") == 0) || (strcmp(s, "char") == 0)) {
+            strcpy(typ, s);
+            line++;
+
+            while (strcmp(s, ";") != 0) {
+                i++;
+                max = i;
+                sa[i].lineno = line;
+
+                strcpy(s, input[idx++]);
+                strcpy(sa[i].var, s);
+                strcpy(sa[i].dt, typ);
+
+                strcpy(s, input[idx++]);
+
+                if (strcmp(s, "=") == 0) {
+                    strcpy(s, input[idx++]);
+                    strcpy(sa[i].val, s);
+                    strcpy(s, input[idx++]);
+                } else {
+                    strcpy(sa[i].val, gar);
+                }
+
+                if (strcmp(s, ",") == 0) {
+                    continue;
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    for (i = 1; i <= max; i++) {
+        printf("\n%s\t\t%s\t\t%d\t\t%s\n", sa[i].var, sa[i].dt, sa[i].lineno, sa[i].val);
+    }
+}
+
+Q5) 
+
+#include <iostream>
+#include <stack>
+#include <string>
+#include <iomanip> // For alignment
+using namespace std;
+
+stack<char> st;
+
+void disp() {
+    stack<char> temp = st;
+    string output;
+    while (!temp.empty()) {
+        output = temp.top() + output;
+        temp.pop();
+    }
+    cout << setw(20) << left << output; // Align stack output
+}
+
+int reduce(int* j, string lp[], string rp[], int n) {
+    string u;
+    int t = st.size();
+    for (int i = 0; i < t; i++) {
+        u = "";
+        for (int k = 0; k <= i; k++) {
+            u += st.top();
+            st.pop();
+        }
+        for (int k = 0; k < n; k++)
+            if (u == rp[k]) {
+                st.push(lp[k][0]);
+                return k;
+            }
+        for (int k = u.size() - 1; k >= 0; k--)
+            st.push(u[k]);
+    }
+    return 99;
+}
+
+int shift(string& ip, int* j) {
+    st.push(ip[*j]);
+    (*j)++;
+    disp();
+    return 1;
+}
+
+int main() {
+    int n, j = 0, k, h;
+    string lp[10], rp[10];
+    string ip;
+    cout << "\nEnter the number of productions: ";
+    cin >> n;
+    for (int i = 0; i < n; i++) {
+        cout << "\nEnter the left side of the production " << (i + 1) << ": ";
+        cin >> lp[i];
+        cout << "\nEnter the right side of the production " << (i + 1) << ": ";
+        cin >> rp[i];
+    }
+    cout << "\nEnter the input: ";
+    cin >> ip;
+    ip += "$";
+    st.push('$');
+    cout << "=================================================================";
+    cout << "\nSTACK" << setw(20) << "INPUT" << setw(20) << "OUTPUT";
+    cout << "\n=================================================================\n";
+    cout << setw(20) << left << "$" << setw(20) << ip << endl;
+    
+    while (true) {
+        if (st.top() == lp[0][0] && st.size() == 2 && st.top() == '$' && (j == (ip.length() - 1)))
+            break;
+        if ((h = reduce(&j, lp, rp, n)) != 99) {
+            disp();
+            cout << setw(20) << left << ip.substr(j) << setw(20) << ("Reduce " + lp[h] + " -> " + rp[h]) << endl;
+        }
+        else if (j < ip.length()) {
+            shift(ip, &j);
+            cout << setw(20) << left << ip.substr(j) << setw(20) << ("Shift " + string(1, ip[j - 1])) << endl;
+        }
+        else
+            break;
+    }
+    
+    // Final output to display acceptance
+    disp();
+    cout << setw(20) << left << ip.substr(j) << "accept\n";
+    return 0;
+}
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q1) and Q6)
+1)#include <string.h>
+#include <ctype.h>
+#include <stdio.h>
+
+void keyword(char str[10]) {
+    char keywords[10][10] = {"int", "float", "char", "while", "do", "for", "if"};
+    int is_keyword = 0;
+    for (int i = 0; i < 7; i++) {
+        if (!strcmp(keywords[i], str)) {
+            is_keyword = 1;
+            break;
+        }
+    }
+    if (is_keyword) {
+        printf("\n%s is a keyword", str);
+    } else {
+        printf("\n%s is an identifier", str);
+    }
+}
+
+int main() {
+    char c, str[10];
+    int num[100], tokenvalue = 0, i = 0, j = 0, k = 0;
+
+    printf("\nEnter the C program (type EOF to end input):\n");
+
+    while ((c = getchar()) != EOF) {
+        if (isdigit(c)) {
+            tokenvalue = c - '0';
+            c = getchar();
+            while (isdigit(c)) {
+                tokenvalue = tokenvalue * 10 + (c - '0');
+                c = getchar();
+            }
+            num[i++] = tokenvalue;
+            ungetc(c, stdin);
+        } else if (isalpha(c)) {
+            str[j++] = c;
+            c = getchar();
+            while (isalnum(c) || c == '_' || c == '$') {
+                str[j++] = c;
+                c = getchar();
+            }
+            str[j] = '\0';
+            keyword(str);
+            j = 0;
+            ungetc(c, stdin);
+        } else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || 
+                   c == '<' || c == '>' || c == '&' || c == '^' || c == '=') {
+            printf("\nOperator: %c", c);
+        } else if (!isspace(c)) {
+            printf("\nSpecial character: %c", c);
+        }
+    }
+
+    printf("\nThe constants are: ");
+    for (j = 0; j < i; j++) {
+        printf("%d ", num[j]);
+    }
+    printf("\n");
+
+    return 0;
+}
+
+2)#include<stdio.h>
+#include<string.h>
+struct op
+{
+char l;
+char r[20];
+}op[10],pr[10];
+void main()
+{
+int a,i,k,j,n,z=0,m,q;
+char *p,*l,*tem,temp,t;
+char nu[]="\0";
+printf("\nEnter the no of values:");
+scanf("%d",&n);
+for(i=0;i<n;i++)
+{
+printf("\nLeft ");
+scanf("%s",&op[i].l);
+printf("Right ");
+scanf("%s",op[i].r);
+}
+printf("\nIntermediate code\n");
+for(i=0;i<n;i++)
+printf("%c=%s\n",op[i].l,op[i].r);
+for(i=0;i<n;i++)
+{
+temp=op[i].l;
+p=NULL;
+for(j=0;j<n;j++)
+{
+p=strchr(op[j].r,temp);
+if(p)
+{
+pr[z].l=op[i].l;
+strcpy(pr[z].r,op[i].r);
+z++;
+break;
+}
+}
+}
+printf("\nAfter dead code elimination\n");
+for(k=0;k<z;k++)
+printf("%c\t=%s\n",pr[k].l,pr[k].r);
+for(m=0;m<z;m++)
+{
+tem=pr[m].r;
+for(j=m+1;j<z;j++)
+{
+p=strstr(tem,pr[j].r);
+if(p)
+{
+pr[j].l=pr[m].l;
+for(i=0;i<z;i++)
+{
+if(l)
+{
+a=l-pr[i].r;
+pr[i].r[a]=pr[m].l;
+}
+}
+}
+}
+}
+printf("\nEliminate common expression\n");
+for(i=0;i<z;i++)
+printf("%c\t=%s\n",pr[i].l,pr[i].r);
+for(i=0;i<z;i++)
+{
+for(j=i+1;j<z;j++){
+q=strcmp(pr[i].r,pr[j].r);
+if((pr[i].l==pr[j].l)&&!q)
+{
+pr[i].l='\0';
+strcpy(pr[i].r,nu);
+}
+}
+}
+printf("\nOptimized code\n");
+for(i=0;i<z;i++)
+if(pr[i].l!='\0')
+printf("%c\t=%s\n",pr[i].l,pr[i].r);
+}
